@@ -15,54 +15,107 @@
 # Note that brackets may be round, square or curly and can also be nested. Index after the braces is optional.
 
 # My Solution
+
+
+
+
+pointer=0
+
 class Bracket:
-    def __init__(self, key, value):
-        self.key=key
+    def __init__(self, open_bracket_index, close_bracket_index, value):
+        self.open_bracket_index=open_bracket_index
+        self.close_bracket_index=close_bracket_index
         self.value=value
         
     def __repr__(self):
-        return f"Bracket(key='{self.key}',value='{self.value}')"
+        return f"Bracket(open_bracket_index='{self.open_bracket_index}',close_bracket_index='{self.close_bracket_index}',value='{self.value}')"
 
 class Element:
     def __init__(self,key,value):
         self.key=key
         self.value=value
 
+def tokenize_brackets(elements):
+    brackets=[]
+    n=len(elements)
+    open_brackets_stack=[]
+    closing_brackets_queue=[]
+    prev=""
+    for i in range(n):
+        characters = elements[i].split('-')
+        if characters[0]=='(' or characters[0]=='{' or characters[0]=='[':
+            open_brackets_stack.append(i)
+            prev=characters[0]
+        if characters[0]==')' or characters[0]=='}' or characters[0]==']':
+            if prev=='(' or prev=='[' or prev=='{':
+                open_bracket = open_brackets_stack.pop()
+                if len(characters) > 1:
+                    bracket = Bracket(open_bracket,i,int(characters[1]))
+                    brackets.append(bracket)
+                else:
+                    bracket = Bracket(open_bracket,i,1)
+                    brackets.append(bracket)
+                prev=""
+                continue
+            if len(characters) > 1: 
+                closing_brackets_queue.append(str(i)+"-"+characters[1])
+            else:
+                closing_brackets_queue.append(str(i)+"-"+str(1))
+                
+    n=len(closing_brackets_queue)
+    for i in range(n):
+        cls_chars = closing_brackets_queue.pop(0).split('-')
+        open_bracket = open_brackets_stack.pop()
+        bracket = Bracket(open_bracket,int(cls_chars[0]),int(cls_chars[1]))
+        brackets.append(bracket)
+        
+    print(brackets)
+    return brackets
+        
 def count_brackets(elements):
-    
+    open_brackets=[]
     n = len(elements)
     brackets=[]
     # iterate
     for i in range(n):
         characters = elements[i].split('-')
+        if characters[0]=='(' or characters[0]=='{' or characters[0]=='[':
+            open_brackets.append(i)
         if characters[0]==')' or characters[0]=='}' or characters[0]==']':
             if len(characters) > 1: 
-                brackets.append(Bracket(characters[0], characters[1]))
+                brackets.append(Bracket(characters[0], characters[1], open_brackets.pop()))
             else: 
-                brackets.append(Bracket(characters[0], '1'))
+                brackets.append(Bracket(characters[0], '1', open_brackets.pop()))
     
     return brackets
         
 def counter(elements, brackets):
-    pointer=0
     n = len(elements)
     elements_dict = {}
     multiplier=1
-    brackets.insert(0,Bracket('[',1))
+    prev_mutliplier_stack=[Bracket(1000,1000,1)]
+    brackets.append(Bracket(1000,1000,1))
     for i in range(n):
         characters = elements[i].split('-')
         character = characters[0]
         value=1
         closing_brackets=[']','}',')']
         opening_brackets=['[','{','(']
-        print(character)
+        
         if character=='{' or character=='(' or character=='[':
-            pointer = pointer + 1
-            multiplier = int(brackets[pointer].value)
+            for j in range(len(brackets)):
+                if i == brackets[j].open_bracket_index:
+                    prev_mutliplier_stack.append(brackets[j])
+                    multi = 1
+                    for k in range(len(prev_mutliplier_stack)):
+                        multi = multi * prev_mutliplier_stack[k].value
+                    multiplier = multi
+                    continue
+                    
             
         if character==')' or character=='}' or character==']':
-            pointer = pointer - 1
-            multiplier = int(brackets[pointer].value)
+            prev_mutliplier_stack.pop()
+            multiplier = brackets[-1].value
             
             
         if character not in closing_brackets and character not in opening_brackets and len(characters)>1:
@@ -108,6 +161,8 @@ def parse(formula):
 
 def parse_molecule(formula):
     elements = parse(formula)
-    brackets = count_brackets(elements)
+    brackets = tokenize_brackets(elements)
     return counter(elements,brackets)
+    
+    pass
     

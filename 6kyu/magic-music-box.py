@@ -34,8 +34,7 @@
     # MUSICAL NOTES = DO, RE, MI, FA, SOL, LA, SI
     # no words = return empty array
 class Word_Counter:
-    def __init__(self, word, counter, musical_notes):
-        self.word = word
+    def __init__(self, counter, musical_notes):
         self.counter = counter
         self.musical_notes = musical_notes
         
@@ -44,25 +43,38 @@ class Word_Counter:
             self.counter = self.counter - len(self.musical_notes)
         
     def __repr__(self):
-        return f"Word_Counter(word='{self.word}',counter='{self.counter}',musical_notes='{self.musical_notes}')"
+        return f"Word_Counter(counter='{self.counter}',musical_notes='{self.musical_notes}')"
 
 def evaluate(words_dict):
-    done = False
     sum = 0
-    for val in words_dict.values():
-        sum = sum + val.counter
-    if sum == 0:
-        done = True
 
-    return done
+    for val in words_dict.values():
+        sum += val.counter  # Add the counter value of each value to the sum
+    if sum == 0:
+        return True
+
+    return False
+
+def update_dict(hasMatched,word,words_dict,m,musical_notes,i):
+    word_from_dict = words_dict.get(word)
+    word_from_dict.counter = m
+    
+    if hasMatched and musical_notes[i] not in word_from_dict.musical_notes:
+        word_from_dict.musical_notes = musical_notes
+        
+    if not hasMatched and musical_notes[i] not in word_from_dict.musical_notes:
+        word_from_dict.musical_notes.append(musical_notes[i])
+
+    word_from_dict.reevaluate()
+    words_dict[word] = word_from_dict
+    return words_dict
 
 def magic_music_box(words):
     musical_notes = ["DO", "RE", "MI", "FA", "SOL", "LA", "SI"]
     m = len(musical_notes)
 
-    musical_note = ""
     words_dict = {}
-    shouldNext = True
+    shouldNext = False
     music_box = []
     i = 0
     j = 0
@@ -70,7 +82,7 @@ def magic_music_box(words):
     complete = False
     
     for word in words:
-        words_dict[word] =  Word_Counter(word,m,[])
+        words_dict[word] =  Word_Counter(m,[])
     
     while True:
         if evaluate(words_dict)==True:
@@ -80,34 +92,23 @@ def magic_music_box(words):
             break
         
         if shouldNext:
-            musical_note = musical_notes[i]
             i = i+1
             if i == m:
                 i = 0
             shouldNext = False
             counter = 0
-        
-        if musical_note in words[j] and words[j] not in music_box:
+            
+        if musical_notes[i] in words[j] and words[j] not in music_box:
             music_box.append(words[j])
-            word = words_dict.get(words[j])
-            word.counter = m
-            if musical_note not in word.musical_notes: 
-                word.musical_notes = musical_notes
-                
-            word.reevaluate()
-            words_dict[words[j]] = word
+            
+            words_dict = update_dict(True,words[j],words_dict,m,musical_notes,i)
             
             shouldNext = True
             counter = 0
             
         else:
-            word = words_dict.get(words[j])
-            word.counter = m
-            if musical_note not in word.musical_notes: 
-                word.musical_notes.append(musical_note)
-            word.reevaluate()
-            words_dict[words[j]] = word
-            
+            words_dict = update_dict(False,words[j],words_dict,m,musical_notes,i)
+            shouldNext = False
             counter += 1 
 
         

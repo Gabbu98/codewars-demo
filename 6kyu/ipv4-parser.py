@@ -37,21 +37,22 @@
 # For example:
 # >>> print ipv4__parser('192.168.50.1', '255.255.255.0')
 # ('192.168.50.0', '0.0.0.1')
+BINARY_VALUES = [128,64,32,16,8,4,2,1]
 
 def convertToBinary(value=[]):
-    binary = [128,64,32,16,8,4,2,1]
     result=[]
     for num in value:
         bin = [0,0,0,0,0,0,0,0]
         number = int(num)
         i=0
         complete=False
-        while i<=7 or number!=0:
-            if binary[i]>number:
+        while i<=7 or complete==False:
+            if BINARY_VALUES[i]>number:
                 bin[i]=0
             else:
-                number=number-binary[i]
+                number=number-BINARY_VALUES[i]
                 bin[i]=1
+                
             if number==0:
                 result.append(bin)
                 complete=True
@@ -61,9 +62,8 @@ def convertToBinary(value=[]):
     return result
         
 def andOperation(bin1,bin2):
-    n=len(bin1)
     result=[]
-    for i in range(n):
+    for i in range(len(bin1)):
         octet1=bin1[i]
         octet2=bin2[i]
         m=len(octet1)
@@ -76,8 +76,6 @@ def andOperation(bin1,bin2):
     return result
 
 def orOperation(bin1,bin2):
-    print(bin1,bin2)
-    n=len(bin1)
     result=[]
     
     for i in range(len(bin1)):
@@ -93,13 +91,12 @@ def orOperation(bin1,bin2):
     return result
 
 def convertToValue(binary_list):
-    binary_values = [128,64,32,16,8,4,2,1]
     value = []
     for binary in binary_list:
         sum = 0
         for i in range(8):
             if binary[i] == 1:
-                sum = sum + binary_values[i]
+                sum = sum + BINARY_VALUES[i]
         value.append(str(sum))
     return value
                 
@@ -107,10 +104,9 @@ def convertToValue(binary_list):
 def ipv4__parser(ip_addr, mask):
     ip_addr_list = ip_addr.split('.')
     mask_list = mask.split('.')
-    # convert ip address
+    
     ip_addr_list_binary=convertToBinary(ip_addr_list)
   
-    # convert mask
     mask_list_binary=convertToBinary(mask_list)
     
     network_prefix_list_binary=andOperation(ip_addr_list_binary, mask_list_binary)
@@ -121,7 +117,4 @@ def ipv4__parser(ip_addr, mask):
 
     host_identifier_list=convertToValue(host_identifier_list_binary)
     
-    
-    net_addr = ".".join(network_prefix_list)
-    host_addr = ".".join(host_identifier_list)
-    return net_addr, host_addr
+    return ".".join(network_prefix_list), ".".join(host_identifier_list)
